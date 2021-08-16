@@ -1,0 +1,31 @@
+[
+  {
+    "Id": "1",
+    "RoleName": "Bronze",
+    "Description": "bronze",
+    "ShowInListing": true,
+    "Price":  0
+
+  },
+  {
+    "Id": "2",
+    "RoleName": "Silver",
+    "Description": "silver",
+    "ShowInListing": true,
+    "Price":  1.99
+
+  },
+  {
+    "Id": "3",
+    "RoleName": "Gold",
+    "Description": "gold",
+    "ShowInListing": true,
+    "Price":  2.99
+
+  }
+
+
+
+]
+
+

@@ -1,0 +1,32 @@
+[
+  {
+    "Id": 1,
+    "MembershipName": "BRONZE",
+    "Description": "Bronze",
+    "ShowInListing": true,
+    "Price": 0.00,
+    "IsDeleted": false,
+    "IsActive": true
+
+  },
+  {
+    "Id": 2,
+    "MembershipName": "SILVER",
+    "Description": "Silver",
+    "ShowInListing": true,
+    "Price": 1.99,
+    "IsDeleted": false,
+    "IsActive": true
+
+  },
+  {
+    "Id": 3,
+    "MembershipName": "GOLD",
+    "Description": "GOLD",
+    "ShowInListing": true,
+    "Price": 2.99,
+    "IsDeleted": false,
+    "IsActive": true
+
+  }
+]

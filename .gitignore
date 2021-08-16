@@ -3,3 +3,9 @@
 ################################################################################
 
 /Core/bin
+/Core/obj
+/Infrastructure/bin
+/Infrastructure/obj
+/UpSurgeApp.API/bin
+/UpSurgeApp.API/obj
+/.vs/UpSurgeApp.API
