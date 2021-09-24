@@ -89,7 +89,7 @@ namespace Core.Entities
 
         public Membership Memberships { get; set; }
 
-        public int MembershipId { get; set; }
+        public int? MembershipId { get; set; }
 
         public Country Country { get; set; }
 

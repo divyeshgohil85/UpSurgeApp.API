@@ -19,7 +19,7 @@ namespace Infrastructure.Data
     public class AppDbContextSeed
     {
 
-        public static async Task SeedAsync(AppDbContext context, ILoggerFactory loggerFactory)
+        public static async Task SeedAsync(UpSurgeAppDbContext context, ILoggerFactory loggerFactory)
         {
             try
             {

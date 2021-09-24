@@ -1,18 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Core.Interface;
 using Infrastructure.Data;
-using Infrastructure.Data.Identity;
 using Infrastructure.Data.Repository;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.AzureAppServices;
+using System;
+using System.Threading.Tasks;
 
 namespace UpSurgeApp.API
 {
@@ -29,7 +25,7 @@ namespace UpSurgeApp.API
             {
                 var services = scope.ServiceProvider;
                 var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-                var context = services.GetRequiredService<AppDbContext>();
+                var context = services.GetRequiredService<UpSurgeAppDbContext>();
                 try
                 {
                     /********** ADDS THE PENDING MIGRATIONS TO THE DATABASE AND IF DB DOESN'T EXISTS IT CREATES THE DB ********************/
@@ -63,6 +59,23 @@ namespace UpSurgeApp.API
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    // We have to be precise on the logging levels
+                    logging.AddConsole();
+                    logging.AddDebug();
+                    logging.AddAzureWebAppDiagnostics();
+                })
+                .ConfigureServices(services =>
+                {
+                    services.Configure<AzureFileLoggerOptions>(options =>
+                    {
+                        options.FileName = "my-azure-diagnostics-";
+                        options.FileSizeLimit = 50 * 1024;
+                        options.RetainedFileCountLimit = 5;
+                    });
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

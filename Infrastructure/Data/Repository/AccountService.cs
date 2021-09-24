@@ -20,9 +20,9 @@ namespace Infrastructure.Data.Repository
 
         private readonly IConfiguration _configuration;
 
-        private readonly AppDbContext _context;
+        private readonly UpSurgeAppDbContext _context;
 
-        public AccountService(AppDbContext context, IConfiguration configuration)
+        public AccountService(UpSurgeAppDbContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
@@ -53,9 +53,8 @@ namespace Infrastructure.Data.Repository
 
         public async Task<StringMessageCL> AddNewUser(AppUser user, string OTP)
         {
-
             var OTPInt = Convert.ToInt32(OTP);
-            var Membership = _context.Memberships.Where(p => p.Id == 1).FirstOrDefault(); // Need To get from the Database...
+
             try
             { //Check user's OTP and make active
 
@@ -72,28 +71,22 @@ namespace Infrastructure.Data.Repository
                     await _context.SaveChangesAsync();
                 }
 
-                await AddUserToDB(user, Membership);
+                //user.CreatedAt = DateTime.UtcNow;
+                user.UserName = user.FirstName + " " + user.LastName;
+                user.LastLoginTime = DateTime.UtcNow;
+                user.Password = HashPassword(user.Password);
+                user.LastLoginTime = DateTime.UtcNow;
+                user.Token = user.Token;//Guid.NewGuid().ToString();
+                await _context.AppUsers.AddAsync(user);
+                await _context.SaveChangesAsync();
 
-                return new StringMessageCL("User Created Successfully.", ResponseType.Success, user.Token, Membership.Id);
+                return new StringMessageCL("User Created Successfully.", ResponseType.Success, user.Token);
             }
             catch (Exception ex)
             {
                 LogService.Instance(_context).AddErrorLogException(ex, "AccountService.cs");
                 return new StringMessageCL(ex.Message, ResponseType.Exception); ;
             }
-        }
-
-        private async Task AddUserToDB(AppUser user, Membership Membership)
-        {
-            //user.CreatedAt = DateTime.UtcNow;
-            user.UserName = user.FirstName + " " + user.LastName;
-            user.MembershipId = Membership.Id;
-            user.LastLoginTime = DateTime.UtcNow;
-            user.Password = HashPassword(user.Password);
-            user.LastLoginTime = DateTime.UtcNow;
-            user.Token = user.Token;//Guid.NewGuid().ToString();
-            await _context.AppUsers.AddAsync(user);
-            await _context.SaveChangesAsync();
         }
 
         public static string HashPassword(string password)
@@ -140,8 +133,6 @@ namespace Infrastructure.Data.Repository
             {
                 LogService.Instance(_context).AddErrorLogException(e, "$$Twilio Error --AccountService/MobileOTP");
                 return new StringMessageCL(e.Message, ResponseType.Exception);
-                //Console.WriteLine(e.Message);
-                //Console.WriteLine($"Twilio Error {e.Code} - {e.MoreInfo}");
             }
             catch (Exception ex)
             {
@@ -151,7 +142,7 @@ namespace Infrastructure.Data.Repository
         }
 
         //Generate RandomNo
-        public int GenerateRandomNo()
+        private int GenerateRandomNo()
         {
             int _min = 1000;
             int _max = 9999;
@@ -159,7 +150,7 @@ namespace Infrastructure.Data.Repository
             return _rdm.Next(_min, _max);
         }
 
-        string TwilioSMSAPI(string MobileWithCountryCode, string OTP)
+        private string TwilioSMSAPI(string MobileWithCountryCode, string OTP)
         {
             string accountSid = _configuration["Twilio:TWILIO_ACCOUNT_SID"];                    // Environment.GetEnvironmentVariable("TWILIO_ACCOUNT_SID");
             string authToken = _configuration["Twilio:TWILIO_AUTH_TOKEN"];
@@ -247,15 +238,23 @@ namespace Infrastructure.Data.Repository
                     {
                         return new StringMessageCL("No account exists with this Email !!!.", ResponseType.Failed);
                     }
-                    //Send OTP to verify the Email
 
                     var verificationCode = GenerateRandomNo();
 
                     var IsSent = await SendEmailTo(Email, verificationCode);
-
-
                     if (IsSent)
                     {
+                        var mobileOTPdetails = new MobileOTP
+                        {
+                            CountryId = result.CountryId,
+                            Mobile = result.Mobile,
+                            OTP = verificationCode
+                        };
+
+                        _context.MobileOTPs.Add(mobileOTPdetails);
+
+                        await _context.SaveChangesAsync();
+
                         return new StringMessageCL("Verification Code sent successfully !!!.", ResponseType.Success,"", verificationCode);
                     }
                     else {
@@ -270,6 +269,26 @@ namespace Infrastructure.Data.Repository
                 LogService.Instance(_context).AddErrorLogException(ex, "AccountService.cs/ResetPassword");
                 return new StringMessageCL(ex.Message, ResponseType.Exception);
             }
+        }
+
+        public bool VerifyCode(string email, int code)
+        {
+            var appUser = _context.AppUsers.FirstOrDefault(p => p.Email == email);
+            if (appUser == null)
+            {
+                return false;
+            }
+
+            var otp = _context.MobileOTPs.FirstOrDefault(
+                x => x.IsActive && !x.IsDeleted && !x.IsVerified && x.Mobile == appUser.Mobile && x.OTP == code);
+
+            if (otp == null)
+                return false;
+
+            otp.IsVerified = true;
+            _context.SaveChanges();
+
+            return true;
         }
 
 
@@ -334,9 +353,49 @@ namespace Infrastructure.Data.Repository
 
         }
 
-        Task<StringMessageCL> IAccountRepository.ResetPassword(string Email)
+        public async Task<StringMessageCL> UpdateMembership(string Email, int membershipId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = await _context.AppUsers.Where(p => p.Email == Email).FirstOrDefaultAsync();
+                if (user == null)
+                {
+                    return new StringMessageCL("There is no account linked with the Email exists in our system !!!.", ResponseType.NotFound);
+                }
+
+                user.MembershipId = membershipId;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                _context.SaveChanges();
+
+                return new StringMessageCL("Password changed successfully !!!.", ResponseType.Success);
+            }
+
+            catch (Exception ex)
+            {
+                LogService.Instance(_context).AddErrorLogException(ex, "AccountService.cs/ResetPassword");
+                return new StringMessageCL(ex.Message, ResponseType.Exception);
+            }
+        }
+
+        public IEnumerable<(string Email, string DisplayName, int? MembershipId)> GetUsersByMembershipId(int membershipId = -1)
+        {
+            try
+            {
+                return _context.AppUsers.Where(
+                        x => 
+                            membershipId == -1 ||
+                            (x.MembershipId == null && membershipId == 0) || 
+                            (x.MembershipId != null && x.MembershipId == membershipId)
+                    )
+                    .ToArray()
+                    .Select(x => (x.Email, x.FirstName, x.MembershipId));
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance(_context).AddErrorLogException(ex, "AccountService.cs/ResetPassword");
+                return default;
+            }
         }
     }
 }

@@ -10,9 +10,9 @@ namespace Infrastructure.Data.Repository
 {
     public class GenericService<T> : IGenericRepository<T> where T : BaseEntity
     {
-        private readonly AppDbContext _context;
+        private readonly UpSurgeAppDbContext _context;
 
-        public GenericService(AppDbContext context)
+        public GenericService(UpSurgeAppDbContext context)
         {
             _context = context;
         }

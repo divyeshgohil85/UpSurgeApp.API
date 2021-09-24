@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace UpSurgeApp.API.Dtos
+﻿namespace UpSurgeApp.API.Dtos
 {
     public class UserDto
     {

@@ -1,35 +1,25 @@
 ﻿using Core.Interface;
-using Infrastructure.Data.Identity;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using UpSurgeApp.API.Dtos;
-using UpSurgeApp.API.Extensions;
 using UpSurgeApp.API.Errors;
 using Core.Entities;
-using Infrastructure.Data.Repository;
-using static UpSurgeApp.API.Errors.ApiResponse;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
-using Microsoft.Extensions.Configuration;
 using Core.Common;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UpSurgeApp.API.Controllers
 {
 
     public class AccountController : BaseApiController
     {
-        //private readonly UserManager<AppUser> _userManager;
-        //private readonly SignInManager<AppUser> _signInManager;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _env;
@@ -40,13 +30,10 @@ namespace UpSurgeApp.API.Controllers
         public AccountController(IAccountRepository accRepo,
                 IMapper mapper, IWebHostEnvironment env, ITokenService tokenService)
         {
-            //_userManager = userManager;
-            //_signInManager = signInManager;
             _tokenService = tokenService;
             _mapper = mapper;
             _accRepo = accRepo;
             _env = env;
-
         }
 
         bool IsValidEmail(string strIn)
@@ -145,7 +132,7 @@ namespace UpSurgeApp.API.Controllers
                     Email = result.User.Email,
                     DisplayName = result.User.FirstName,
                     Token = result.User.Token,
-                    MembershipId = result.User.MembershipId
+                    MembershipId = result.User.MembershipId.GetValueOrDefault()
 
                 };
             }
@@ -223,8 +210,6 @@ namespace UpSurgeApp.API.Controllers
                 //var fileNameOutput = SaveImage(registerDto.ProfilePicture, registerDto.FirstName, fileName);
 
 
-
-
                 //Map New User
                 var _mappedNewuser = _mapper.Map<RegisterDto, AppUser>(registerDto);
 
@@ -236,11 +221,9 @@ namespace UpSurgeApp.API.Controllers
                 {
                     return new BadRequestObjectResult(new ApiValidationErrorResponse
                     {
-                        Errors = new[]
-                     { result.Message}
+                        Errors = new[] { result.Message}
                     });
                 }
-
                 else if (result.Response == ResponseType.Success)
                 {
                     return Ok(new UserDto
@@ -256,20 +239,17 @@ namespace UpSurgeApp.API.Controllers
                 {
                     return BadRequest();
                 }
-
             }
             catch (Exception ex)
             {
-                //  LogService.Instance(context)
                 return new BadRequestObjectResult(new ApiValidationErrorResponse
                 {
-                    Errors = new[]
-                     { ex.Message}
+                    Errors = new[] { ex.Message}
                 });
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("SendResetPasswordLink")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
@@ -341,12 +321,11 @@ namespace UpSurgeApp.API.Controllers
         [Authorize]
         [HttpPost("ResetPassword")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<StringMessageCL>> ResetPassword([FromQuery] string EmailAddress, string Password, string NewPassword)
         {
             try
             {
-
                 if (!ModelState.IsValid)
                 {
                     return new BadRequestObjectResult(new ApiValidationErrorResponse
@@ -379,7 +358,6 @@ namespace UpSurgeApp.API.Controllers
 
                 var result = await _accRepo.SendVerificationCode(EmailAddress);
 
-
                 if (result.Response == ResponseType.Success)
                 {
                     return Ok(result);
@@ -388,9 +366,7 @@ namespace UpSurgeApp.API.Controllers
                 {
                     return new BadRequestObjectResult(new ApiValidationErrorResponse
                     {
-                        Errors = new[]
-
-                          { result.Message }
+                        Errors = new[] { result.Message }
                     });
                 }
             }
@@ -398,15 +374,78 @@ namespace UpSurgeApp.API.Controllers
             {
                 return new BadRequestObjectResult(new ApiValidationErrorResponse
                 {
-                    Errors = new[]
-                      { ex.Message }
+                    Errors = new[] { ex.Message }
                 });
             }
         }
 
 
+        [Authorize]
+        [HttpPost("Membership")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<UserMembershipDto>> SetMembership(UserMembershipDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
+            try
+            {
+                var result = await _accRepo.UpdateMembership(dto.Email, dto.MembershipId.Value);
 
+                if(result.Response == ResponseType.NotFound)
+                    return NotFound();
+
+                if (result.Response == ResponseType.Exception || result.Response == ResponseType.Failed)
+                {
+                    return new BadRequestObjectResult(new ApiValidationErrorResponse
+                    {
+                        Errors = new[] { result.Message }
+                    });
+                }
+
+                if (result.Response == ResponseType.Success)
+                {
+                    return Ok(dto);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult(new ApiValidationErrorResponse
+                {
+                    Errors = new[] { ex.Message }
+                });
+            }
+        }
+
+        [Authorize]
+        [HttpGet("Users/Membership/{membershipId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<IEnumerable<UserDto>> GetUsersByMembership(int membershipId)
+        {
+            try
+            {
+                var result = _accRepo.GetUsersByMembershipId(membershipId);
+
+                var dto = result.Select(x => new UserDto { Email = x.Email, DisplayName = x.DisplayName, MembershipId = x.MembershipId.GetValueOrDefault() });
+                
+                return Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult(new ApiValidationErrorResponse
+                {
+                    Errors = new[] { ex.Message }
+                });
+            }
+        }
 
         private static bool TryGetFromBase64String(string base64, out byte[] output)
         {
@@ -468,6 +507,32 @@ namespace UpSurgeApp.API.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPost("verifycode")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        public ActionResult<bool> VerifyCode([FromBody] VerifyCodeDto OTPDetails)
+        {
+            if (!ModelState.IsValid)
+            {
+                return new BadRequestObjectResult(new ApiValidationErrorResponse
+                {
+                    Errors = new[] { "Please validate the phone number and code. !!!." }
+                });
+            }
+
+            try
+            {
+                return _accRepo.VerifyCode(OTPDetails.Email, OTPDetails.Code);
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult(new ApiValidationErrorResponse
+                {
+                    Errors = new[] { ex.Message }
+                });
+            }
+        }
 
 
 

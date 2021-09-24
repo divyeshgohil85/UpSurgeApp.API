@@ -3,10 +3,7 @@ using Infrastructure.Data.Repository;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UpSurgeApp.API.Errors;
 
 namespace UpSurgeApp.API.Extensions
@@ -18,6 +15,7 @@ namespace UpSurgeApp.API.Extensions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAccountRepository, AccountService>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericService<>));
+
             services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.InvalidModelStateResponseFactory = actionContext =>
@@ -35,6 +33,14 @@ namespace UpSurgeApp.API.Extensions
                     return new BadRequestObjectResult(errorResponse);
                 };
             });
+
+            services.AddScoped<IForecastService, ForecastService>();
+            //services.AddScoped<IMatchmakerRepository, MatchmakerRepository>();
+            services.AddScoped<IMatchmakerService, MatchmakerService>();
+            services.AddScoped<ISymbolService, SymbolService>();
+            services.AddScoped<ISentimentsService, SentimentsService>();
+            services.AddScoped<IAnalystRatingService, AnalystRatingService>();
+
             return services;
         }
 

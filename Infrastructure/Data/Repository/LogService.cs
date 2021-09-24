@@ -11,14 +11,14 @@ namespace Infrastructure.Data.Repository
     {
         private static readonly LogService instance = new LogService();
 
-        private static AppDbContext _context;
+        private static UpSurgeAppDbContext _context;
         private static readonly LogService _instance;
 
         static LogService()
         {
             _instance = new LogService();
         }
-        public static LogService Instance(AppDbContext context)
+        public static LogService Instance(UpSurgeAppDbContext context)
         {
             _context = context;
 

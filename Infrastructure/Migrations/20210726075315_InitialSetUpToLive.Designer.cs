@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Infrastructure.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(UpSurgeAppDbContext))]
     [Migration("20210726075315_InitialSetUpToLive")]
     partial class InitialSetUpToLive
     {

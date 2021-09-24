@@ -1,6 +1,5 @@
 ﻿using Core.Entities;
 using Core.Interface;
-using Infrastructure.Data.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;

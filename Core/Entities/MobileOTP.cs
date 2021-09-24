@@ -10,7 +10,6 @@ namespace Core.Entities
     {
         public MobileOTP()
         {
-            IsDeleted = false;
             IsActive = true;
             CreatedAt = DateTime.UtcNow;
         }

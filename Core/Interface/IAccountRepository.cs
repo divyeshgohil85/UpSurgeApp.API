@@ -1,8 +1,6 @@
 ﻿using Core.Common;
 using Core.Entities;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Core.Interface
@@ -21,8 +19,10 @@ namespace Core.Interface
 
         public Task<StringMessageCL> SendVerificationCode(string Email);
 
-        public Task<StringMessageCL> ResetPassword(string Email);
+        bool VerifyCode(string email, int code);
 
+        public Task<StringMessageCL> UpdateMembership(string Email, int membershipId);
 
+        public IEnumerable<(string Email, string DisplayName, int? MembershipId)> GetUsersByMembershipId(int membershipId = -1);
     }
 }

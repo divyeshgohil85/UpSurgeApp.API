@@ -1,23 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
+using Infrastructure.Cron;
 using Infrastructure.Data;
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
-using Infrastructure.Data.Identity;
+using Infrastructure.SentiOne;
+using Infrastructure.Sygnal;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
+using Polly;
+using Polly.Extensions.Http;
+using Quotemedia;
+using System;
+using System.IO;
+using System.Net.Http;
 using UpSurgeApp.API.Extensions;
 using UpSurgeApp.API.Helpers;
 
@@ -35,28 +32,67 @@ namespace UpSurgeApp.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-            services.AddControllers();
+            //services.AddControllers();
             services.AddControllers().AddNewtonsoftJson();
-            services.AddAutoMapper(typeof(MappingProfiles));
 
-          
+            services.AddAutoMapper(typeof(MappingProfiles));          
 
             /* It is gonna live for the lifetime of the REQUEST */
 
-            services.AddDbContext<AppDbContext>(options =>
-                   options.UseSqlServer(Configuration.GetConnectionString("UpSurgeAppConnection"),
-                   assembly => assembly.MigrationsAssembly("Infrastructure")));
+            services.AddDbContext<UpSurgeAppDbContext>(options =>
+                   options.UseSqlServer(
+                       Configuration.GetConnectionString("UpSurgeAppConnection"), 
+                       assembly => assembly.MigrationsAssembly("Infrastructure")
+                       )
+                   );
 
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("IdentityConnection"),
-            assembly => assembly.MigrationsAssembly("Infrastructure")));
+            services
+                .AddHttpClient<QuotemediaHttpClient>(configClient =>
+                {
+                    configClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Configuration["Quotemedia:Token"]);
+                    configClient.BaseAddress = new Uri(Configuration["Quotemedia:BaseAddress"]);
+                });
 
+            services
+                .AddHttpClient<SentiOneHttpClient>(configClient =>
+                {
+                    configClient.DefaultRequestHeaders.Add("X-API-KEY", Configuration["Sentione:X-API-KEY"]);
+                    configClient.BaseAddress = new Uri(Configuration["Sentione:BaseAddress"]);
+                });
+
+            var sygnalBaseAddress = Configuration["Sygnal:BaseAddress"];
+            var sygnalUser = Configuration["Sygnal:User"];
+            var sygnalPassword = Configuration["Sygnal:Password"];
+            var authenticationString = $"{sygnalUser}:{sygnalPassword}";
+            var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authenticationString));
+            services
+                .AddHttpClient<SygnalHttpClient>(configClient => {                                        
+                    configClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+                    configClient.BaseAddress = new Uri(sygnalBaseAddress);
+                    configClient.Timeout = TimeSpan.FromMinutes(10);
+                })
+                .SetHandlerLifetime(TimeSpan.FromMinutes(20))
+                .AddPolicyHandler(GetSygnalHttpClientRetryPolicy());
 
             /* Adding Services Extensions */
             services.AddApplicationServices();
             services.AddSwaggerDocumentation();
             services.AddIdentityServices(Configuration);
+
+            // Crone
+            services.AddCronJob<ForecastCronJob>(c =>
+            {
+                c.TimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                c.CronExpression = @"20 8 * * *";
+            });
+        }
+
+        static IAsyncPolicy<HttpResponseMessage> GetSygnalHttpClientRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                //.OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+                .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -6,8 +6,8 @@ namespace Infrastructure.Data.Repository
 {
     public class ValuesService
     {
-        private readonly AppDbContext _context;
-        public ValuesService(AppDbContext context)
+        private readonly UpSurgeAppDbContext _context;
+        public ValuesService(UpSurgeAppDbContext context)
         {
             _context = context;
         }

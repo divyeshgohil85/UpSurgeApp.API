@@ -20,6 +20,7 @@ namespace Core.Common
     {
         Success = 1,
         Failed = 0,
+        NotFound = 2,
         Exception = -1
     }
 
