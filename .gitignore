@@ -1,0 +1,11 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Core/bin
+/Core/obj
+/Infrastructure/bin
+/Infrastructure/obj
+/UpSurgeApp.API/bin
+/UpSurgeApp.API/obj
+/.vs/UpSurgeApp.API
