@@ -80,11 +80,11 @@ namespace UpSurgeApp.API
             services.AddIdentityServices(Configuration);
 
             // Crone
-            services.AddCronJob<ForecastCronJob>(c =>
-            {
-                c.TimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-                c.CronExpression = @"20 8 * * *";
-            });
+            //services.AddCronJob<ForecastCronJob>(c =>
+            //{
+            //    c.TimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            //    c.CronExpression = @"20 8 * * *";
+            //});
         }
 
         static IAsyncPolicy<HttpResponseMessage> GetSygnalHttpClientRetryPolicy()
