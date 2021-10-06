@@ -40,7 +40,7 @@ namespace UpSurgeApp.API.Controllers
         [HttpGet("GetImageURL")]
         public string GetImageURL(string base64string)
         {
-            var folderPath = System.IO.Path.Combine(_env.ContentRootPath, "ProfilePics/" + base64string);
+            var folderPath = System.IO.Path.Combine(_env.ContentRootPath, "Images/" + base64string);
             if (!System.IO.Directory.Exists(folderPath))
             {
                 System.IO.Directory.CreateDirectory(folderPath);
