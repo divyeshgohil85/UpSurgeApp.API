@@ -210,7 +210,7 @@ namespace UpSurgeApp.API.Controllers
                 //var fileNameOutput = SaveImage(registerDto.ProfilePicture, registerDto.FirstName, fileName);
 
 
-                //Map New User
+                //Map New User               
                 var _mappedNewuser = _mapper.Map<RegisterDto, AppUser>(registerDto);
 
                 //Add Data to DB

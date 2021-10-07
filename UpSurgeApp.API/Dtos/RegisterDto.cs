@@ -41,5 +41,7 @@ namespace UpSurgeApp.API.Dtos
         public bool IsAgreeToTerms { get; set; }
 
         public int CountryId { get; set; }
+        public Guid Udid { get; set; }
+        public bool IsBlocked { get; set; }
     }
 }
