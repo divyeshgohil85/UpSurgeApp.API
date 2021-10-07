@@ -397,6 +397,31 @@ namespace Infrastructure.Data.Repository
                 return default;
             }
         }
+
+        public async Task<StringMessageCL> CheckAndUpdateUdIDAsync(string Email,string Udid)
+        {
+            try
+            {
+                var user = await _context.AppUsers.Where(p => p.Email == Email).FirstOrDefaultAsync();
+                if (user != null)
+                {
+                    if(user.Udid.ToString() != Udid)
+                    {
+                        user.Udid = Guid.NewGuid(); 
+                        _context.SaveChanges();
+                    }
+                    return new StringMessageCL("", ResponseType.Success);
+                }
+                
+                return new StringMessageCL("Failed", ResponseType.Failed);
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance(_context).AddErrorLogException(ex, "AccountService.cs");
+                return new StringMessageCL(ex.Message, ResponseType.Exception);
+            }
+        }
+
     }
 }
 

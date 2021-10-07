@@ -24,5 +24,8 @@ namespace Core.Interface
         public Task<StringMessageCL> UpdateMembership(string Email, int membershipId);
 
         public IEnumerable<(string Email, string DisplayName, int? MembershipId)> GetUsersByMembershipId(int membershipId = -1);
+
+        public Task<StringMessageCL> CheckAndUpdateUdIDAsync(string Email,string Udid);
+
     }
 }

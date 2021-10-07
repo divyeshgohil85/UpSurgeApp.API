@@ -127,6 +127,19 @@ namespace UpSurgeApp.API.Controllers
             }
             else if (result.User != null && result.Response == ResponseType.Success)
             {
+
+                //CHECK UDID
+                var udid = await _accRepo.CheckAndUpdateUdIDAsync(result.User.Email, loginDto.Udid.ToString());
+
+                if (udid.Response == ResponseType.Failed || udid.Response == ResponseType.Exception)
+                {
+                    return new BadRequestObjectResult(new ApiValidationErrorResponse
+                    {
+                        Errors = new[]
+                     { udid.Message }
+                    });
+                }
+
                 return new UserDto
                 {
                     Email = result.User.Email,
@@ -136,7 +149,7 @@ namespace UpSurgeApp.API.Controllers
 
                 };
             }
-
+            
             return new BadRequestObjectResult(new ApiValidationErrorResponse
             {
                 Errors = new[]
