@@ -35,6 +35,7 @@ namespace Infrastructure.Services
 
             //var getUserId = _context.AppUsers.Select(x => x.Id).Except(blockedUser).ToList();
             var existingValues = _context.AppUsers
+                .Where(x=>x.Id != userId)
                 .Select(x => new { x.Id, x.FirstName, x.LastName, x.Email, x.ProfilePictureUrl, x.Udid })
                 .ToList();
 
