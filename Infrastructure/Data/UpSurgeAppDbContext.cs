@@ -55,6 +55,7 @@ namespace Infrastructure.Data
         public DbSet<Forecast> Forecasts { get; set; }
         public DbSet<MatchmakerUserPreference> MatchmakerUserPreferences { get; set; }
         public DbSet<Channel> Channel { get; set; }
+        public DbSet<BlockUsers> BlockUsers { get; set; }
 
 
         //public DbSet<Core.Entities.Sygnal> Sygnals { get; set; }
