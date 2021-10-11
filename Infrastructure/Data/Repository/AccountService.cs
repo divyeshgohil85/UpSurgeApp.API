@@ -382,14 +382,21 @@ namespace Infrastructure.Data.Repository
         {
             try
             {
-                return _context.AppUsers.Where(
+                var userId = _context.AppUsers.FirstOrDefault(x => x.MembershipId == membershipId).Id;
+
+                var blockedUser = _context.BlockUsers.Where(x => x.UserId == userId).Select(x => x.BlockUserId).ToList();
+
+                var existingValues = _context.AppUsers.Where(
                         x => 
                             membershipId == -1 ||
                             (x.MembershipId == null && membershipId == 0) || 
                             (x.MembershipId != null && x.MembershipId == membershipId)
                     )
-                    .ToArray()
-                    .Select(x => (x.Email, x.FirstName, x.MembershipId));
+                    .ToArray();                    
+
+                var filteredValues = existingValues.Where(x => !blockedUser.Contains(x.Id)).Select(x => (x.Email, x.FirstName, x.MembershipId));
+
+                return filteredValues;
             }
             catch (Exception ex)
             {
