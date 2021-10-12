@@ -6,5 +6,7 @@
         public string DisplayName { get; set; }
         public string Token { get; set; }
         public int MembershipId { get; set; }
+        public string ProfilePicURL { get; set; }
+        public string UdId { get; set; }
     }
 }

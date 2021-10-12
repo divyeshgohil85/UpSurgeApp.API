@@ -145,8 +145,9 @@ namespace UpSurgeApp.API.Controllers
                     Email = result.User.Email,
                     DisplayName = result.User.FirstName,
                     Token = result.User.Token,
-                    MembershipId = result.User.MembershipId.GetValueOrDefault()
-
+                    MembershipId = result.User.MembershipId.GetValueOrDefault(),
+                    ProfilePicURL = result.User.ProfilePictureUrl,
+                    UdId = result.User.Udid.ToString()
                 };
             }
             
@@ -447,7 +448,7 @@ namespace UpSurgeApp.API.Controllers
             {
                 var result = _accRepo.GetUsersByMembershipId(membershipId);
 
-                var dto = result.Select(x => new UserDto { Email = x.Email, DisplayName = x.DisplayName, MembershipId = x.MembershipId.GetValueOrDefault() });
+                var dto = result.Select(x => new UserDto { Email = x.Email, DisplayName = x.DisplayName, MembershipId = x.MembershipId.GetValueOrDefault(), ProfilePicURL = x.ProfilePictureUrl, UdId = x.Udid.ToString() });
                 
                 return Ok(dto);
             }

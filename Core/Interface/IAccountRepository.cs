@@ -1,5 +1,6 @@
 ﻿using Core.Common;
 using Core.Entities;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -23,7 +24,7 @@ namespace Core.Interface
 
         public Task<StringMessageCL> UpdateMembership(string Email, int membershipId);
 
-        public IEnumerable<(string Email, string DisplayName, int? MembershipId)> GetUsersByMembershipId(int membershipId = -1);
+        public IEnumerable<(string Email, string DisplayName, int? MembershipId, string ProfilePictureUrl, Guid Udid)> GetUsersByMembershipId(int membershipId = -1);
 
         public Task<StringMessageCL> CheckAndUpdateUdIDAsync(string Email,string Udid);
 

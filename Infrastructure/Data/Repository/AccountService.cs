@@ -378,7 +378,7 @@ namespace Infrastructure.Data.Repository
             }
         }
 
-        public IEnumerable<(string Email, string DisplayName, int? MembershipId)> GetUsersByMembershipId(int membershipId = -1)
+        public IEnumerable<(string Email, string DisplayName, int? MembershipId, string ProfilePictureUrl,Guid Udid)> GetUsersByMembershipId(int membershipId = -1)
         {
             try
             {
@@ -394,7 +394,7 @@ namespace Infrastructure.Data.Repository
                     )
                     .ToArray();                    
 
-                var filteredValues = existingValues.Where(x => !blockedUser.Contains(x.Id)).Select(x => (x.Email, x.FirstName, x.MembershipId));
+                var filteredValues = existingValues.Where(x => !blockedUser.Contains(x.Id)).Select(x => (x.Email, x.FirstName, x.MembershipId,x.ProfilePictureUrl,x.Udid));
 
                 return filteredValues;
             }
@@ -414,7 +414,7 @@ namespace Infrastructure.Data.Repository
                 {
                     if(user.Udid.ToString() != Udid)
                     {
-                        user.Udid = Guid.NewGuid(); 
+                        user.Udid = Guid.Parse(Udid); 
                         _context.SaveChanges();
                     }
                     return new StringMessageCL("", ResponseType.Success);
